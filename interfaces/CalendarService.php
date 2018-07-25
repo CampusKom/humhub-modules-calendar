@@ -88,8 +88,6 @@ class CalendarService extends Component
     public static function flushCache() {
         static::$resultCache = [];
     }
-
-
     /**
      * Merges all CalendarItems for a given ContentContainerActiveRecord filtered by $from, $to and $filters.
      *
@@ -110,8 +108,6 @@ class CalendarService extends Component
         $this->trigger(static::EVENT_FIND_ITEMS, $event);
 
 
-
-
         foreach($event->getItems() as $itemTypeKey => $items) {
             $itemType = $this->getItemType($itemTypeKey, $contentContainer);
 
@@ -124,7 +120,6 @@ class CalendarService extends Component
         }
 
         $calendarEntries = CalendarEntryQuery::findForFilter($start, $end, $contentContainer, $filters, $limit);
-
         $result = array_merge($calendarEntries, $result);
 
         ArrayHelper::multisort($result, ['startDateTime', 'endDateTime'], [SORT_ASC, SORT_ASC]);

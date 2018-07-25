@@ -9,4 +9,12 @@ return array (
   'Participation' => 'Participation',
   'Select event type...' => 'Sélectionner le type d\'événement...',
   'Title' => 'Titre',
+  'Repeat' => 'Répéter',
+  'Every' => 'Chaque',
+  'Day' => 'Jour',
+  'Week' => 'Semaine',
+  'Month' => 'Mois',
+  'Year' => 'Année',
+  'Until' => "jusqu'à",
+  'Period' => 'Période'
 );

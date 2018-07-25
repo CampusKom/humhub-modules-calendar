@@ -91,6 +91,10 @@ class CalendarEntry extends ContentActiveRecord implements Searchable, CalendarI
     const PARTICIPATION_MODE_INVITE = 1;
     const PARTICIPATION_MODE_ALL = 2;
 
+    const Recur_Type_WEEK = 0;
+    const Recur_Type_Month = 1;
+    const Recur_Type_Year= 2;
+    const Recur_Type_Day= 3;
     /**
      * @var array all given participation modes as array
      */
@@ -182,11 +186,13 @@ class CalendarEntry extends ContentActiveRecord implements Searchable, CalendarI
             ['color', 'string'],
             [['start_datetime'], DbDateValidator::className()],
             [['end_datetime'], DbDateValidator::className()],
-            [['all_day', 'allow_decline', 'allow_maybe', 'max_participants'], 'integer'],
+            [['recur_end'], DbDateValidator::className()],
+            [['all_day', 'allow_decline', 'allow_maybe','recur', 'recur_type', 'recur_interval','max_participants'], 'integer'],
             [['title'], 'string', 'max' => 200],
             [['participation_mode'], 'in', 'range' => self::$participationModes],
             [['end_datetime'], 'validateEndTime'],
-            [['description', 'participant_info'], 'safe'],
+            [['recur_end'], 'validateRecurTime'],
+            [['description', 'participant_info','recur_end'], 'safe'],
         ];
     }
 
@@ -204,6 +210,13 @@ class CalendarEntry extends ContentActiveRecord implements Searchable, CalendarI
         }
     }
 
+    public function validateRecurTime($attribute, $params)
+    {
+        if (new DateTime($this->start_datetime) >= new DateTime($this->recur_end)) {
+            $this->addError($attribute, Yii::t('CalendarModule.base', "Recur end time must be after start time!"));
+        }
+    }
+
     /**
      * @inheritdoc
      */
@@ -218,6 +231,10 @@ class CalendarEntry extends ContentActiveRecord implements Searchable, CalendarI
             'allow_decline' => Yii::t('CalendarModule.base', 'Allow participation state \'decline\''),
             'allow_maybe' => Yii::t('CalendarModule.base', 'Allow participation state \'maybe\''),
             'participation_mode' => Yii::t('CalendarModule.base', 'Participation Mode'),
+            'recur' => Yii::t('CalendarModule.base', 'Recur'),
+            'recur_type' =>  Yii::t('CalendarModule.base','Recur Type'),
+            'recur_interval' =>  Yii::t('CalendarModule.base','Recur Interval'),
+            'recur_end' =>  Yii::t('CalendarModule.base','Recur End'),
             'max_participants' => Yii::t('CalendarModule.base', 'Maximum number of participants'),
         ];
     }
@@ -566,6 +583,11 @@ class CalendarEntry extends ContentActiveRecord implements Searchable, CalendarI
         return new DateTime($this->start_datetime, new DateTimeZone(Yii::$app->timeZone));
     }
 
+    public function getRecurEnd()
+    {
+        return new DateTime($this->recur_end, new DateTimeZone(Yii::$app->timeZone));
+    }
+
     public function getEndDateTime()
     {
         return new DateTime($this->end_datetime, new DateTimeZone(Yii::$app->timeZone));
@@ -609,13 +631,16 @@ class CalendarEntry extends ContentActiveRecord implements Searchable, CalendarI
             throw new Exception('Range maximum exceeded!');
         }
 
-        return CalendarEntryQuery::find()
+       return CalendarEntryQuery::find()
             ->from($start)->to($end)
             ->filter($filters)
             ->userRelated($includes)
             ->limit($limit)->all();
+
+  
     }
 
+   
     /**
      * Returns a list of upcoming events for the given $contentContainer.
      *
@@ -673,4 +698,37 @@ class CalendarEntry extends ContentActiveRecord implements Searchable, CalendarI
         $ics = new ICS($this->title, $this->description,$this->start_datetime, $this->end_datetime, null, null, $timezone, $this->all_day);
         return $ics;
     }
+
+    public static function getRecurType($recur_type){
+        switch($recur_type){
+            case (self::Recur_Type_WEEK) :
+                $type = "Week";
+                break;
+            case (self::Recur_Type_Month) :
+                $type = "Month";
+                break;
+            case (self::Recur_Type_Year) :
+                $type = "Year";
+                break;
+            case (self::Recur_Type_Day) :
+                $type = "Day";
+                break;
+            defaut:
+                $type = null ;
+                break;
+        }
+        return $type;
+    }
+
+    public static function getAllRecurType()
+    {
+        return array(
+            self::Recur_Type_Day => Yii::t('CalendarModule.views_entry_edit',self::getRecurType(self::Recur_Type_Day)), 
+            self::Recur_Type_WEEK => Yii::t('CalendarModule.views_entry_edit',self::getRecurType(self::Recur_Type_WEEK)), 
+            self::Recur_Type_Month => Yii::t('CalendarModule.views_entry_edit',self::getRecurType(self::Recur_Type_Month)), 
+            self::Recur_Type_Year => Yii::t('CalendarModule.views_entry_edit',self::getRecurType(self::Recur_Type_Year)), 
+            
+        );
+    }
+
 }

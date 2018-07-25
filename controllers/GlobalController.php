@@ -211,7 +211,6 @@ class GlobalController extends Controller
             Yii::$app->user->getIdentity()->setSetting('lastFilters', Json::encode($filters), 'calendar');
 
             $filters['userRelated'] = $selectors;
-
             $entries = $this->calendarService->getCalendarItems(new DateTime($start), new DateTime($end), $filters);
         } else {
             $entries = $this->calendarService->getCalendarItems(new DateTime($start), new DateTime($end));

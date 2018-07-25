@@ -6,6 +6,7 @@ use Yii;
 use yii\web\HttpException;
 use humhub\modules\calendar\models\DefaultSettings;
 use humhub\modules\calendar\models\forms\CalendarEntryForm;
+// use humhub\modules\calendar\models\CalendarEntry;
 use humhub\modules\calendar\notifications\CanceledEventNotification;
 use humhub\modules\calendar\permissions\ManageEntry;
 use humhub\modules\stream\actions\Stream;
@@ -87,8 +88,8 @@ class EntryController extends ContentContainerController
         if (!$calendarEntryForm->entry) {
             throw new HttpException(404);
         }
-
         if ($calendarEntryForm->load(Yii::$app->request->post()) && $calendarEntryForm->save()) {
+         
             if(empty($cal)) {
                 return ModalClose::widget(['saved' => true]);
             } else {
@@ -99,6 +100,7 @@ class EntryController extends ContentContainerController
         return $this->renderAjax('edit', [
             'calendarEntryForm' => $calendarEntryForm,
             'contentContainer' => $this->contentContainer,
+            'recurType' => CalendarEntry::getAllRecurType(),
             'editUrl' => $this->contentContainer->createUrl('/calendar/entry/edit', ['id' => $calendarEntryForm->entry->id, 'cal' => $cal])
         ]);
     }

@@ -1,5 +1,6 @@
 <?php
 use humhub\modules\calendar\models\CalendarEntryType;
+use humhub\modules\calendar\models\CalendarEntry;
 use humhub\widgets\ColorPickerField;
 use humhub\widgets\ContentTagDropDown;
 use humhub\widgets\MarkdownField;
@@ -46,7 +47,7 @@ use yii\jui\DatePicker;
     ])->label(false); ?>
 
     <?= $form->field($calendarEntryForm->entry, 'description')->widget(MarkdownField::class, ['fileModel' => $calendarEntryForm->entry, 'fileAttribute' => 'files'])->label(false) ?>
-
+  
     <?= $form->field($calendarEntryForm, 'is_public')->checkbox() ?>
     <?= $form->field($calendarEntryForm->entry, 'all_day')->checkbox(['data-action-change' => 'toggleDateTime']) ?>
 
@@ -55,6 +56,7 @@ use yii\jui\DatePicker;
     <div class="row">
         <div class="col-md-6">
             <?= $form->field($calendarEntryForm, 'start_date')->widget(DatePicker::className(), ['dateFormat' => Yii::$app->params['formatter']['defaultDateFormat'], 'clientOptions' => [], 'options' => ['class' => 'form-control']]) ?>
+       
         </div>
         <div class="col-md-6 timeField" <?= !$calendarEntryForm->showTimeFields() ? 'style="opacity:0.2"' : '' ?>>
             <?= $form->field($calendarEntryForm, 'start_time')->widget(TimePicker::class, ['disabled' => $calendarEntryForm->entry->all_day]); ?>
@@ -72,12 +74,25 @@ use yii\jui\DatePicker;
         </div>
     </div>
 
-    <?php Yii::$app->i18n->autosetLocale(); ?>
-
-    <div class="row">
-        <div class="col-md-6"></div>
-        <div class="col-md-6 timeZoneField" >
-            <?= TimeZoneDropdownAddition::widget(['model' => $calendarEntryForm])?>
+    <?= $form->field($calendarEntryForm->entry, 'recur')->checkbox(['onclick'=>'
+                                                                                  var x = document.getElementById("recurOptionsRow");
+                                                                                  if (x.style.display === "none") {
+                                                                                      x.style.display = "block";
+                                                                                  } else {
+                                                                                      x.style.display = "none";
+                                                                                  }',
+                            'id'=>'recurToggle'])->label( Yii::t('CalendarModule.views_entry_edit', 'Repeat')) ?>
+   
+    <div class="row" id="recurOptionsRow" style="display: none;">
+        <div class="col-md-6">
+            <?= $form->field($calendarEntryForm, 'recur_interval')->textInput()->label(Yii::t('CalendarModule.views_entry_edit', 'Every'));  ?>
+        </div>
+        <div class="col-md-6" >
+            <?= $form->field($calendarEntryForm->entry, 'recur_type')->dropdownList($recurType)->label(Yii::t('CalendarModule.views_entry_edit','Period')); ?>
+        </div>
+        <div class="col-md-12" >
+            <?= $form->field($calendarEntryForm, 'recur_end')->widget(DatePicker::className(), ['dateFormat' => Yii::$app->params['formatter']['defaultDateFormat'], 'clientOptions' => [], 'options' => ['class' => 'form-control']])->label(Yii::t('CalendarModule.views_entry_edit','Until')); ?>
         </div>
     </div>
+
 </div>

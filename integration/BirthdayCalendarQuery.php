@@ -17,11 +17,13 @@ namespace humhub\modules\calendar\integration;
 
 use humhub\modules\calendar\interfaces\AbstractCalendarQuery;
 use humhub\modules\calendar\interfaces\FilterNotSupportedException;
+use humhub\modules\content\components\ContentContainerActiveRecord;
 use humhub\modules\content\components\ActiveQueryContent;
 use humhub\modules\space\models\Membership;
 use humhub\modules\space\models\Space;
 use humhub\modules\user\models\User;
 use Yii;
+use DateTime;
 use yii\db\Expression;
 use yii\db\Query;
 
@@ -41,6 +43,24 @@ class BirthdayCalendarQuery extends AbstractCalendarQuery
     public $dateFormat = 'Y-m-d';
 
     protected $_orderBy = 'next_birthday ASC';
+
+      /**
+     * @param DateTime $start
+     * @param DateTime $end
+     * @param ContentContainerActiveRecord $container
+     * @param array $filters
+     * @param int $limit
+     * @return array|\yii\db\ActiveRecord[]
+     */
+    public static function findForFilter(DateTime $start, DateTime $end, ContentContainerActiveRecord $container = null, $filters = [], $limit = 50)
+    {
+        return static::find()
+            ->container($container)
+            ->from($start)->to($end)
+            ->filter($filters)
+            ->limit($limit)->all();
+       
+    }
 
     protected function setupDateCriteria()
     {
