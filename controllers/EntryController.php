@@ -6,6 +6,7 @@ use Yii;
 use yii\web\HttpException;
 use humhub\modules\calendar\models\DefaultSettings;
 use humhub\modules\calendar\models\forms\CalendarEntryForm;
+// use humhub\modules\calendar\models\CalendarEntry;
 use humhub\modules\calendar\notifications\CanceledEventNotification;
 use humhub\modules\calendar\permissions\ManageEntry;
 use humhub\modules\stream\actions\Stream;
@@ -72,13 +73,14 @@ class EntryController extends ContentContainerController
         return $this->asJson(['success' => true]);
     }
 
-    public function actionEdit($id = null, $start = null, $end = null, $cal = null)
+    public function actionEdit($id = null, $start = null, $end = null, $recur = null, $cal = null)
     {
         if (empty($id) && $this->canCreateEntries()) {
             $calendarEntryForm = new CalendarEntryForm();
-            $calendarEntryForm->createNew($this->contentContainer, $start, $end);
+            $calendarEntryForm->createNew($this->contentContainer, $start, $end, $recur);
         } else {
             $calendarEntryForm = new CalendarEntryForm(['entry' => $this->getCalendarEntry($id)]);
+          
             if(!$calendarEntryForm->entry->content->canEdit()) {
                 throw new HttpException(403);
             }
@@ -87,18 +89,19 @@ class EntryController extends ContentContainerController
         if (!$calendarEntryForm->entry) {
             throw new HttpException(404);
         }
-
         if ($calendarEntryForm->load(Yii::$app->request->post()) && $calendarEntryForm->save()) {
             if(empty($cal)) {
                 return ModalClose::widget(['saved' => true]);
             } else {
+                
                 return $this->renderModal($calendarEntryForm->entry, 1);
             }
         }
-
+       
         return $this->renderAjax('edit', [
             'calendarEntryForm' => $calendarEntryForm,
             'contentContainer' => $this->contentContainer,
+            'recurType' => CalendarEntry::getAllRecurType(),
             'editUrl' => $this->contentContainer->createUrl('/calendar/entry/edit', ['id' => $calendarEntryForm->entry->id, 'cal' => $cal])
         ]);
     }

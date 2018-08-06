@@ -14,8 +14,10 @@ use humhub\modules\content\components\ContentContainerActiveRecord;
 use Yii;
 use DateTime;
 use humhub\modules\user\models\User;
+use humhub\modules\calendar\models\CalendarEntryQuery;
 use humhub\modules\content\components\ActiveQueryContent;
 use yii\base\Component;
+use yii\helpers\ArrayHelper;
 
 /**
  * Created by PhpStorm.
@@ -47,6 +49,8 @@ abstract class AbstractCalendarQuery extends Component
      * @var string database date format
      */
     public $dateFormat = 'Y-m-d H:i:s';
+
+  
 
     /**
      * Available filters
@@ -80,6 +84,8 @@ abstract class AbstractCalendarQuery extends Component
      * @var \humhub\modules\user\models\User user instance used for some of the filters e.g. mine() filter
      */
     protected $_user;
+
+    
 
     /**
      * @var DateTime start date of the filter interval
@@ -141,6 +147,7 @@ abstract class AbstractCalendarQuery extends Component
             ->from($start)->to($end)
             ->filter($filters)
             ->limit($limit)->all();
+
     }
 
     /**
@@ -279,6 +286,9 @@ abstract class AbstractCalendarQuery extends Component
         $this->_container = $container;
         return $this;
     }
+
+  
+
 
     /**
      * Used to deactivate the openRange behaviour, which includes entries if
@@ -636,6 +646,8 @@ abstract class AbstractCalendarQuery extends Component
             $this->_query->andWhere($this->getEndCriteria($this->_to));
         }
     }
+
+
 
     /**
      * Helper function to get the start_datetime query filter.

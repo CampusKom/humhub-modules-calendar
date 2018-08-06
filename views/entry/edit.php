@@ -37,7 +37,7 @@ $calendarEntryForm->entry->color = empty($calendarEntryForm->entry->color) ? $th
 
             <?= Tabs::widget([
                 'viewPath' => '@calendar/views/entry',
-                'params' => ['form' => $form, 'calendarEntryForm' => $calendarEntryForm, 'contentContainer' => $contentContainer],
+                'params' => ['form' => $form,'recurType' => $recurType, 'calendarEntryForm' => $calendarEntryForm, 'contentContainer' => $contentContainer],
                 'items' => [
                     ['label' => Yii::t('CalendarModule.views_entry_edit', 'Basic'),'view' => 'edit-basic', 'linkOptions' => ['class' => 'tab-basic']],
                     ['label' => Yii::t('CalendarModule.views_entry_edit', 'Participation'),'view' => 'edit-participation', 'linkOptions' => ['class' => 'tab-participation']],

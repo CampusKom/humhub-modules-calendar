@@ -296,6 +296,24 @@ humhub.module('calendar', function (module, require, $) {
         }
     };
 
+     /**
+     * @Friskus
+     * Toggle function to set/unset the RRULE string for recurring events
+     */
+    Form.prototype.toggleRecurRule = function(evt) {
+        const recurToggle = document.querySelector('#recurToggle');
+        
+
+        if(!recurToggle.checked) {
+            $('#recurOptionsRow').fadeOut('medium');
+            
+            rruleField.value = null;
+            return false;
+        } else {
+           
+        }
+    }
+
     Form.prototype.changeTimezone = function(evt) {
         $dropDown = this.$.find('.timeZoneInput');
         this.$.find('.calendar-timezone').text($dropDown.find('option:selected').text());

@@ -3,6 +3,8 @@ namespace humhub\modules\calendar\models;
 
 use humhub\modules\calendar\interfaces\AbstractCalendarQuery;
 use humhub\modules\cfiles\models\rows\AbstractFileSystemItemRow;
+use humhub\modules\content\components\ContentContainerActiveRecord;
+use yii\helpers\ArrayHelper;
 use Yii;
 use humhub\modules\space\models\Space;
 use DateTime;
@@ -66,6 +68,11 @@ class CalendarEntryQuery extends AbstractCalendarQuery
      */
     private $praticipantJoined = false;
 
+    public $endRecurField = 'recur_end';
+    protected $_recur = null;
+
+    protected $_recurEnd = null;
+
     public function filterResponded()
     {
         $this->participantJoin();
@@ -92,5 +99,118 @@ class CalendarEntryQuery extends AbstractCalendarQuery
         }
     }
 
+    
+    /**
+     * @param DateTime $start
+     * @param DateTime $end
+     * @param ContentContainerActiveRecord $container
+     * @param array $filters
+     * @param int $limit
+     * @return array|\yii\db\ActiveRecord[]
+     */
+    public static function findForFilter(DateTime $start, DateTime $end, ContentContainerActiveRecord $container = null, $filters = [], $limit = 50)
+    {
+        $non_recurrent = Parent::findForFilter($start, 
+                                    $end,$container, 
+                                    $filters, $limit);
+
+        //recurring event
+        $recurrent = static::getRecurringEntriesbyRange($start,$end,$start,$container,$filters,$limit);
+        $result = ArrayHelper::merge($non_recurrent,$recurrent);
+
+        return $result;
+    }
+
+       //Return array of recurring event between specific start and end time input
+       public static function getRecurringEntriesbyRange(DateTime $start, DateTime $end,DateTime $recur_end, ContentContainerActiveRecord $container = null, $filters = [], $limit = 50)
+       {
+        
+         $recurrent_model =  static::find()
+                                   ->container($container)
+                                   ->recur(true,$start)
+                                   ->filter($filters)
+                                   ->limit($limit)->all();
+
+            // echo var_dump($this->query()->createCommand()->sql);
+         $recurrent = array();
+         foreach($recurrent_model as $model_item)//each reccurent event 
+         {       //  generate all the dates it has to show up in  
+            $dateStart = new DateTime($model_item->start_datetime);
+            $dateEnd = new DateTime($model_item->end_datetime);
+            $recurEndTime = new DateTime($model_item->recur_end);
+
+            $dateStart->modify('+'.$model_item->recur_interval.' '.CalendarEntry::getRecurType($model_item->recur_type));
+            $dateEnd->modify('+'.$model_item->recur_interval.' '.CalendarEntry::getRecurType($model_item->recur_type));
+
+         while($dateStart <= $end && $dateStart <= $recurEndTime)
+           {     //   clone original event base on recurr logic
+             $recurring_item = new CalendarEntry; //clone original event
+             $recurring_item->attributes = $model_item->attributes;
+             $recurring_item->id = $model_item->id;
+             $recurring_item->start_datetime = $dateStart->format('Y-m-d H:i:s'); //set new start date
+             $recurring_item->end_datetime = $dateEnd->format('Y-m-d H:i:s'); //set new end date
+             array_push($recurrent,$recurring_item);
+
+            $dateStart->modify('+'.$model_item->recur_interval.' '.CalendarEntry::getRecurType($model_item->recur_type));
+            $dateEnd->modify('+'.$model_item->recur_interval.' '.CalendarEntry::getRecurType($model_item->recur_type));
+           }
+         }
+         return $recurrent;
+       }
+     
+   
+       /**
+        * Sets up the actual filter query.
+        */
+
+
+            /**
+     * Sets up the date interval filter with respect to the openRange setting.
+     */
+    protected function recur($recur,$recurEnd)
+    {
+        $this->_recur = $recur ;
+        $this->_recurEnd = $recurEnd;
+        return $this;
+    }
+
+    protected function getRecurCriteria(DateTime $date, $eq = '>=')
+    {
+        return [$eq, $this->endRecurField, $date->format($this->dateFormat)];
+    }
+
+    protected function setupDateCriteria()
+    {
+        if ($this->_openRange && $this->_from && $this->_to) {
+            //Search for all dates with start and/or end within the given range
+            $this->_query->andFilterWhere(
+                ['or',
+                    ['and',
+                        $this->getStartCriteria($this->_from, '>='),
+                        $this->getStartCriteria($this->_to, '<=')
+                    ],
+                    ['and',
+                        $this->getEndCriteria($this->_from, '>='),
+                        $this->getEndCriteria($this->_to, '<=')
+                    ]
+                ]
+            );
+            return;
+        }
+
+        if ($this->_from) {
+            $this->_query->andWhere($this->getStartCriteria($this->_from));
+        }
+
+        if ($this->_to) {
+            $this->_query->andWhere($this->getEndCriteria($this->_to));
+        }
+
+        if ($this->_recur) {
+            $this->_query->andWhere(['=','recur',1])
+                         ->andWhere($this->getRecurCriteria($this->_recurEnd));
+         }
+
+    }
 
 }
